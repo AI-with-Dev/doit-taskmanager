@@ -5,10 +5,28 @@ import { errorHandler } from './middleware/error.middleware';
 
 const app: Express = express();
 
-// Enable Cross-Origin Resource Sharing (CORS) so the Next.js frontend can call the Express API
+// Enable Cross-Origin Resource Sharing (CORS) with support for Vercel production domains
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[];
+
 app.use(
   cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    origin: (origin, callback) => {
+      // Allow server-to-server, curl, or mobile requests with no origin
+      if (!origin) return callback(null, true);
+      // Allow configured domains, any Vercel deployment (*.vercel.app), or local dev
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        process.env.NODE_ENV !== 'production'
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
   })
 );
